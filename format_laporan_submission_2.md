@@ -331,6 +331,14 @@ F1-Score@10 sangat berguna untuk mengevaluasi sistem rekomendasi secara menyelur
       
 ​![Cuplikan layar 2025-05-01 213444](https://github.com/user-attachments/assets/2792aacb-9499-469b-9651-7e86a99a76b0)
 
+- Visualisasi Loss – Model Collaborative Filtering (RecommenderNet)
+
+  ![download (2)](https://github.com/user-attachments/assets/9b8d9c56-c89e-4965-8c6c-e0772dddd428)
+
+   - Pada beberapa epoch pertama, terjadi penurunan loss yang signifikan, kemudian kurva mulai melandai.
+   - Training loss terus menurun hingga mendekati nol, sementara validation loss stabil di kisaran 1.5.
+   - Hal ini menunjukkan bahwa model tidak mengalami overfitting secara signifikan.
+
 ### Hasil Evaluasi Model
 Content-Based Filtering:
 - Precision@10 = 0.20 → Dari 10 film yang direkomendasikan, rata-rata 2 film relevan.
