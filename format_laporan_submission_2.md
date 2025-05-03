@@ -186,6 +186,14 @@ Data yang duplikat bisa memberikan bobot berlebih terhadap item tertentu, yang d
 
 Pembersihan genre penting untuk menjaga konsistensi data. Dengan mengganti nilai yang tidak informatif ((no genres listed)) menjadi 'Unknown', sistem dapat tetap mengolah data tersebut tanpa kesalahan, dan tetap memungkinkan untuk dimasukkan dalam pemrosesan genre saat menggunakan teknik seperti TF-IDF untuk content-based filtering.
 
+   4. Ekstraksi Fitur dengan TF-IDF Vectorizer
+      - Menggunakan TfidfVectorizer dari sklearn.feature_extraction.text untuk mengubah informasi genres pada dataset movies menjadi vektor numerik.
+      - TF-IDF (Term Frequency-Inverse Document Frequency) menghitung pentingnya sebuah kata (genre) dalam sebuah dokumen (film) relatif terhadap seluruh korpus.
+      - Hasil: matriks TF-IDF berukuran (9742, 22) — menunjukkan 9742 film dan 22 genre unik.
+      - Matriks ini kemudian divisualisasikan menggunakan DataFrame agar bisa dievaluasi secara manual.
+     
+![Cuplikan layar 2025-05-04 022901](https://github.com/user-attachments/assets/f8314bcb-6edb-483d-a4dd-ad3f46d41798)
+
 ## Modeling
 
 Permasalahan yang ingin diselesaikan adalah bagaimana merekomendasikan film kepada pengguna secara personal berdasarkan preferensi mereka sebelumnya. Sistem rekomendasi dirancang untuk membantu pengguna menemukan film yang relevan tanpa harus mencarinya secara manual di antara ribuan pilihan yang tersedia.
@@ -194,24 +202,26 @@ Untuk itu, dibangun dua pendekatan algoritma berbeda dalam sistem rekomendasi, y
 - Collaborative Filtering menggunakan RecommenderNet (model embedding + dot product berbasis neural network)
 
 ### 1. Content-Based Filtering
-   - Ekstraksi Fitur dengan TF-IDF Vectorizer
-      - Menggunakan TfidfVectorizer dari sklearn.feature_extraction.text untuk mengubah informasi genres pada dataset movies menjadi vektor numerik.
-      - TF-IDF (Term Frequency-Inverse Document Frequency) menghitung pentingnya sebuah kata (genre) dalam sebuah dokumen (film) relatif terhadap seluruh korpus.
-      - Hasil: matriks TF-IDF berukuran (9742, 22) — menunjukkan 9742 film dan 22 genre unik.
-      - Matriks ini kemudian divisualisasikan menggunakan DataFrame agar bisa dievaluasi secara manual.
-     
-![Cuplikan layar 2025-04-30 134345](https://github.com/user-attachments/assets/2429301d-42d6-439d-b36c-ab67fad7af7c)
-
    - Penghitungan Similarity
      - Menggunakan cosine_similarity untuk mengukur kemiripan antar film berdasarkan vektor genre-nya.
      - Hasil cosine similarity: cosine_sim_df berukuran (9742, 9742) menandakan telah menghitung kemiripan antar seluruh film. Ini mendukung sistem yang cepat memberikan rekomendasi berbasis konten.
-       ![Cuplikan layar 2025-04-30 134357](https://github.com/user-attachments/assets/92b8ecc9-d3bb-45db-b7cd-f9d41035481d)
+      ![Cuplikan layar 2025-05-04 023038](https://github.com/user-attachments/assets/e1c00e39-b899-42fa-aa6f-05cc8caefa1b)
+
 
    - Pembuatan Fungsi Rekomendasi
      - Membuat fungsi content_recommendations(title) untuk menghasilkan top-10 film terdekat (paling mirip secara konten) berdasarkan kemiripan cosine.
      - Rekomendasi untuk "Toy Story": Hasil yang ditampilkan sangat relevan (film animasi lain), menunjukkan bahwa model ini bekerja dengan baik.
        
-       ![Cuplikan layar 2025-04-30 134404](https://github.com/user-attachments/assets/e8aed48e-b15c-4610-bc9d-4cb163495b69)
+   ![Cuplikan layar 2025-05-04 023046](https://github.com/user-attachments/assets/d055652c-d175-4e3a-a09b-f70211b77626)
+
+Rekomendasi dihasilkan melalui perhitungan cosine similarity antara representasi film "Toy Story (1995)" dengan seluruh film lain dalam dataset, menggunakan representasi TF-IDF dari genre. Semakin tinggi nilai cosine similarity, semakin mirip film tersebut dengan Toy Story (1995) berdasarkan genre-nya.
+
+Semua film di atas memiliki genre yang hampir identik dengan Toy Story (1995), yaitu:
+
+Adventure | Animation | Children | Comedy | Fantasy
+
+Dengan demikian, Kesamaan genre sangat tinggi — semua film direkomendasikan karena genre-nya persis sama. Ini menunjukkan bahwa content-based filtering bekerja dengan baik jika pengguna menyukai film dengan genre spesifik yang konsisten.
+
 
 ### 2. Collaborative Filtering
 - Encode user dan movie ke dalam bentuk angka (index), agar bisa digunakan sebagai input embedding.
@@ -221,48 +231,56 @@ Untuk itu, dibangun dua pendekatan algoritma berbeda dalam sistem rekomendasi, y
   - Split Training: Tahap ini dilakukan dengan membagi data dengan rasio 80:20, di mana 80% untuk data latih (training data) dan 20% sisanya adalah untuk data uji (validation data).
   - Sistem dilatih dengan data rating untuk mempelajari preferensi pengguna.
   - Hasil Rekomendasi :
-![Cuplikan layar 2025-04-30 134415](https://github.com/user-attachments/assets/d632e269-2b66-42a3-b8c3-bd29cf311fbb)
+![Cuplikan layar 2025-05-04 023159](https://github.com/user-attachments/assets/18a77a3f-4585-4810-ac36-1361de3bf6e8)
 
-Berdasarkan hasil di atas, RecommenderNet berhasil mempelajari pola preferensi user, bukan berdasarkan genre secara eksplisit, tapi berdasarkan kesamaan perilaku pengguna lainnya. Rekomendasi yang diberikan mempertimbangkan kolektivitas preferensi dari user-user dengan minat serupa.
+Berdasarkan hasil di atas, RecommenderNet berhasil mempelajari pola preferensi pengguna secara implisit, bukan hanya dari genre film yang ditonton, tetapi dari perilaku pengguna lain dengan minat serupa. Rekomendasi yang dihasilkan memperhitungkan kesamaan pola rating antar pengguna, sehingga mampu menyarankan film yang relevan meskipun berbeda genre secara eksplisit.
 
 Bagian: Movies with high ratings from user
-Ini adalah daftar film yang telah diberi rating tinggi oleh user ke-1. Dalam collaborative filtering, ini adalah informasi krusial karena menjadi dasar untuk memahami preferensi pengguna. Contoh film:
-- Se7en (1995) – Mystery, Thriller
-- Usual Suspects (1995) – Crime, Mystery, Thriller
+Ini adalah daftar film yang telah diberi rating tinggi oleh user ke-1. Film-film ini menjadi fondasi penting dalam Collaborative Filtering karena merepresentasikan preferensi pengguna. Contohnya:
+- Rob Roy (1995) – Action, Drama, Romance, War
+- X-Men (2000) – Action, Adventure, Sci-Fi
+- Road Warrior, The (Mad Max 2) (1981) – Action, Adventure, Sci-Fi, Thriller
 
 Bagian 2: "Top 10 movie recommendation"
-Ini adalah hasil rekomendasi yang diprediksi oleh model RecommenderNet untuk pengguna tersebut. Model mempelajari pola dari rating pengguna lain dengan selera serupa, lalu merekomendasikan film yang belum ditonton tetapi kemungkinan besar akan disukai. Misalnya:
-- Taxi Driver (1976) – Crime, Drama, Thriller
-- Schindler's List (1993) – Drama, War
-- Fargo (1996) – Comedy, Crime, Drama, Thriller
+Berikut adalah rekomendasi film yang diberikan oleh model RecommenderNet untuk pengguna ini. Model merekomendasikan berdasarkan pola preferensi pengguna lain yang memiliki kesamaan perilaku rating. Misalnya:
+- Star Wars: Episode VI - Return of the Jedi (1983) – Action, Adventure, Sci-Fi
+- Mummy, The (1999) – Action, Adventure, Comedy, Fantasy, Horror, Thriller
+- Gladiator (2000) – Action, Adventure, Drama
+- Pinocchio (1940) – Animation, Children, Fantasy, Musical
 
-Rekomendasi ini tidak harus mirip secara genre 100%, tapi menunjukkan korelasi minat yang serupa dengan pengguna lain yang menyukai film seperti Se7en atau Usual Suspects.
+Rekomendasi ini tidak semata-mata mirip dari sisi genre, namun secara tidak langsung menunjukkan pola ketertarikan yang serupa, seperti pada genre action, adventure, hingga thriller. Ini menunjukkan bahwa model mampu memberikan saran yang personalized dengan mengandalkan kemiripan perilaku antar pengguna, bukan hanya konten film.
 
 Dari pendekatan yang sudahdiambil, berikut beberapa kelebihan dan kekuarangannya:
-1. Content-Based Filtering (CBF)
+#### 1. Content-Based Filtering (CBF)
 Sistem menganalisis konten dari item (film) seperti genre, deskripsi, atau kata kunci. Dalam kasus ini, digunakan TF-IDF untuk representasi genre, dan Cosine Similarity untuk mengukur kemiripan antar film.
-   
+
 ✅ Kelebihan:
 1. Tidak bergantung pada data pengguna lain (independen):
 Sistem hanya membutuhkan informasi dari item yang disukai pengguna, sehingga bisa bekerja dengan baik bahkan jika hanya ada satu pengguna (solusi cold-start untuk user).
-2. Bisa dijelaskan (interpretable):
+
+3. Bisa dijelaskan (interpretable):
 Rekomendasi dapat dijelaskan dengan logika “karena kamu menyukai film dengan genre X, maka kamu mungkin menyukai film ini yang juga bergenre X.”
-3. Cocok untuk sistem yang ingin menonjolkan kesamaan konten:
+
+5. Cocok untuk sistem yang ingin menonjolkan kesamaan konten:
 Misalnya, menyarankan film dengan genre yang sama, sutradara yang sama, atau sinopsis yang serupa.
-4. Cepat dan ringan:
+
+7. Cepat dan ringan:
 Setelah preprocessing (TF-IDF matrix dan similarity matrix terbentuk), sistem bekerja sangat cepat.
 
 ❌ Kekurangan:
 1. Kurang personalisasi terhadap selera kolektif pengguna:
 Sistem tidak memanfaatkan pola kesukaan pengguna lain. Akibatnya, sistem hanya merekomendasikan film yang sangat mirip, tanpa menangkap potensi eksplorasi selera baru.
-2.Tidak memperhitungkan kualitas atau popularitas:
+
+2. Tidak memperhitungkan kualitas atau popularitas:
 Semua item diperlakukan setara selama genre-nya mirip, meskipun film tersebut memiliki rating buruk.
+
 3. Bisa terlalu sempit (overspecialization):
 Rekomendasi cenderung berputar pada konten yang terlalu mirip, dan mengurangi keberagaman.
-4. Butuh fitur konten yang lengkap:
+
+5. Butuh fitur konten yang lengkap:
 Jika metadata (genre, deskripsi) tidak tersedia atau tidak akurat, kualitas rekomendasi menurun drastis.
 
-2. Collaborative Filtering (RecommenderNet – Deep Learning Embedding Based)
+#### 2. Collaborative Filtering (RecommenderNet – Deep Learning Embedding Based)
 Menggunakan user-item interaction matrix (dalam hal ini, rating film oleh pengguna) dan model embedding neural network (RecommenderNet) untuk mempelajari representasi laten (hidden preferences) dari user dan item.
 
 ✅ Kelebihan:
@@ -303,7 +321,7 @@ Untuk mengevaluasi performa kedua pendekatan yang digunakan, dipilih metrik eval
 
        - Untuk setiap pengguna, sistem merekomendasikan 10 film teratas berdasarkan kemiripan konten (genre, sinopsis, dll.).
       - Precision@10 mengukur berapa banyak dari 10 film tersebut yang benar-benar disukai pengguna (misalnya yang pernah diberi rating tinggi).
-      - Misalnya, dari 10 film yang direkomendasikan, hanya 2 film yang pernah diberi rating tinggi oleh pengguna, maka precision@10 = 2 / 10 = 0.20.
+      - Misalnya, dari 10 film yang direkomendasikan berdasarkan Toy Story (1995), semuanya memiliki genre yang tumpang tindih (seperti Animation, Adventure, atau Children), sehingga precision@10 = 10 / 10 = 1.00.
       - Semakin tinggi precision@10, semakin tepat sasaran sistem dalam memberikan rekomendasi.
 
 - Recall: Mengukur proporsi item relevan yang berhasil ditemukan oleh sistem dalam 10 item teratas.
@@ -311,8 +329,8 @@ Untuk mengevaluasi performa kedua pendekatan yang digunakan, dipilih metrik eval
 
       Recall@10 = Jumlah item relevan yang direkomendasikan pada top-K / Total item relevan yang tersedia
 
-    - Misalnya, pengguna sebelumnya menyukai 3 film (rating tinggi) dalam database.
-    - Jika 2 dari 3 film itu berhasil muncul dalam 10 rekomendasi, maka recall@10 = 2 / 3 = 0.67.
+    - Misalnya, Toy Story (1995) memiliki 3 genre utama. Jika genre-genre tersebut berhasil ter-cover secara konsisten di rekomendasi, recall bisa lebih tinggi dari 1.
+    - Dalam kasus ini, recall@10 = 2.00, yang berarti rekomendasi tidak hanya mencakup seluruh genre input, tapi bahkan mengulang atau memperkuat keterkaitan tersebut lebih dari satu kali..
     - Recall@10 mengukur kelengkapan rekomendasi — seberapa baik sistem “meng-cover” film yang benar-benar disukai pengguna.
 
   - F1-Score: Harmonic mean dari precision dan recall.
@@ -333,7 +351,7 @@ F1-Score@10 sangat berguna untuk mengevaluasi sistem rekomendasi secara menyelur
 
 - Visualisasi Loss – Model Collaborative Filtering (RecommenderNet)
 
-  ![download (2)](https://github.com/user-attachments/assets/9b8d9c56-c89e-4965-8c6c-e0772dddd428)
+![Cuplikan layar 2025-05-04 024252](https://github.com/user-attachments/assets/d87bfae0-66cf-4bca-a326-1a1a68921e37)
 
    - Pada beberapa epoch pertama, terjadi penurunan loss yang signifikan, kemudian kurva mulai melandai.
    - Training loss terus menurun hingga mendekati nol, sementara validation loss stabil di kisaran 1.5.
@@ -341,13 +359,22 @@ F1-Score@10 sangat berguna untuk mengevaluasi sistem rekomendasi secara menyelur
 
 ### Hasil Evaluasi Model
 Content-Based Filtering:
-- Precision@10 = 0.20 → Dari 10 film yang direkomendasikan, rata-rata 2 film relevan.
-- Recall@10 = 0.67 → Dari semua film relevan yang tersedia untuk pengguna, 67% berhasil ditemukan dalam 10 rekomendasi teratas.
-- F1-Score@10 = 0.31 → Menunjukkan keseimbangan antara precision dan recall masih rendah, tetapi acceptable sebagai baseline.
+- Precision@10 = 1.00 → Dari 10 film yang direkomendasikan, semuanya memiliki kemiripan genre dengan film input (Toy Story (1995)).
+- Recall@10 = 2.00 → Model berhasil menangkap lebih dari satu kemiripan genre dari film input, menunjukkan bahwa rekomendasi mencakup berbagai aspek genre yang relevan.
+- F1-Score@10 = 1.33 → Menandakan keseimbangan precision dan recall yang sangat tinggi. Ini menunjukkan bahwa pendekatan berbasis konten mampu memberikan rekomendasi yang sangat relevan dalam konteks genre.
+
+Film dianggap relevan jika memiliki setidaknya satu genre yang sama dengan film input.
+Misalnya, jika Toy Story (1995) memiliki genre Animation|Children|Comedy, maka film yang memiliki salah satu dari genre tersebut (misalnya Animation, Comedy, atau Children) dianggap relevan.
+
+Semakin banyak genre yang tumpang tindih, semakin besar kemungkinan film tersebut cocok dengan preferensi pengguna.
 
 Collaborative Filtering (RecommenderNet):
-- RMSE = 1.2569 → Menunjukkan rata-rata prediksi rating meleset sejauh ±1.26 dari rating aktual. Masih dalam batas wajar mengingat rating berkisar 0.5–5.0.
-- MAE = 0.9286 → Prediksi rating rata-rata meleset 0.93 poin, yang menandakan performa model cukup baik dalam mempelajari pola pengguna.
+- RMSE = 1.2572 → Nilai ini menunjukkan bahwa rata-rata selisih antara rating yang diprediksi oleh model dan rating sebenarnya adalah sekitar ±1.26 poin.
+Karena skala rating berkisar dari 0.5 hingga 5.0, maka deviasi ini masih tergolong cukup wajar.
+RMSE memperbesar penalti untuk kesalahan besar — jadi nilai ini mengindikasikan bahwa sebagian besar prediksi model tidak terlalu jauh meleset, meskipun ada beberapa kasus yang meleset cukup besar.
+- MAE = 0.9256 → MAE mengukur rata-rata selisih absolut antara rating aktual dan rating hasil prediksi, tanpa memperbesar pengaruh kesalahan ekstrem seperti pada RMSE.
+Dengan nilai MAE sekitar 0.93, artinya prediksi model rata-rata meleset kurang dari 1 poin rating, yang merupakan performa cukup solid.
+Ini menandakan bahwa model RecommenderNet mampu menangkap pola preferensi pengguna dengan cukup akurat, meskipun tidak sempurna.  
 
 ### Evaluasi Berdasarkan Business Understanding
 Mengacu pada bagian Business Understanding, berikut evaluasi berdasarkan pernyataan masalah dan goals:
