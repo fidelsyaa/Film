@@ -86,6 +86,8 @@ Data yang saya pakai untuk membuat sistem rekomendasi ini yaitu movie.csv dan ra
 
 ### 1. movies.csv
 
+jumlah data: 9742 rows × 3 columns
+
 ![Cuplikan layar 2025-04-30 132357](https://github.com/user-attachments/assets/9151e4ac-6bf9-4991-8400-cd4f77991615)
 
 | Kolom  | Deskripsi  |
@@ -111,6 +113,8 @@ Artinya:
   ![Cuplikan layar 2025-04-30 134117](https://github.com/user-attachments/assets/e58b71c5-2cc0-455b-94f1-da94f6f22731)
 
 ### 2. ratings.csv
+
+jumlah data: 100836 rows × 4 columns
 
 ![Cuplikan layar 2025-04-30 132616](https://github.com/user-attachments/assets/f82e6d8c-e8fc-4430-8426-0757f0a81c34)
 
@@ -186,13 +190,37 @@ Data yang duplikat bisa memberikan bobot berlebih terhadap item tertentu, yang d
 
 Pembersihan genre penting untuk menjaga konsistensi data. Dengan mengganti nilai yang tidak informatif ((no genres listed)) menjadi 'Unknown', sistem dapat tetap mengolah data tersebut tanpa kesalahan, dan tetap memungkinkan untuk dimasukkan dalam pemrosesan genre saat menggunakan teknik seperti TF-IDF untuk content-based filtering.
 
-   4. Ekstraksi Fitur dengan TF-IDF Vectorizer
+#### - Content Based Filltering Preparation
+1. Inisialisasi TfidfVectorizer
+   
+Proses ini mengonversi teks genre menjadi representasi numerik yang bisa digunakan dalam Content-Based Filtering. Setiap film nanti akan direpresentasikan sebagai vektor TF-IDF berdasarkan genre-nya, yang bisa digunakan untuk menghitung kemiripan antar film menggunakan cosine similarity.
+
+      tf.get_feature_names_out()
+   
+Ini menghasilkan daftar kata unik (fitur) yang ditemukan dan diproses oleh TfidfVectorizer. Output yang ditampilkan:
+
+![Cuplikan layar 2025-05-07 105749](https://github.com/user-attachments/assets/2e5af275-b698-44a4-98bd-2e0c5d51f4b2)
+
+2. Mengubah Sparse Matrix menjadi Dense Matrix
+   
+tfidf_matrix awalnya adalah sparse matrix (karena sebagian besar nilainya nol). Fungsi .todense() mengubahnya menjadi dense matrix (semua nilai ditampilkan, termasuk nol).
+         
+![Cuplikan layar 2025-05-07 110155](https://github.com/user-attachments/assets/30ddde2f-a4e1-49e0-90e6-cf32e29896be)
+
+3. Ekstraksi Fitur dengan TF-IDF Vectorizer
+   
       - Menggunakan TfidfVectorizer dari sklearn.feature_extraction.text untuk mengubah informasi genres pada dataset movies menjadi vektor numerik.
       - TF-IDF (Term Frequency-Inverse Document Frequency) menghitung pentingnya sebuah kata (genre) dalam sebuah dokumen (film) relatif terhadap seluruh korpus.
       - Hasil: matriks TF-IDF berukuran (9742, 22) — menunjukkan 9742 film dan 22 genre unik.
       - Matriks ini kemudian divisualisasikan menggunakan DataFrame agar bisa dievaluasi secara manual.
      
 ![Cuplikan layar 2025-05-04 022901](https://github.com/user-attachments/assets/f8314bcb-6edb-483d-a4dd-ad3f46d41798)
+
+#### Collaborative Filltering Preparation
+1. Encode Label
+Mengubah userId dan movieId dari nilai aslinya (yang bisa berupa angka besar atau tidak berurutan) menjadi angka indeks kecil dan berurutan mulai dari 0 agar efisien digunakan dalam model, terutama model yang menggunakan embedding layer seperti RecommenderNet atau matrix factorization.
+2. Split Data
+Tahap ini dilakukan dengan membagi data dengan rasio 80:20, di mana 80% untuk data latih (training data) dan 20% sisanya adalah untuk data uji (validation data).
 
 ## Modeling
 
